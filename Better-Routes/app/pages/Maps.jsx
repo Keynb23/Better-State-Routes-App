@@ -1,4 +1,3 @@
-import React from 'react';
 import { Search, MapPin, X, ArrowLeft } from 'lucide-react-native';
 
 // Standalone Maps page with unified search and back navigation.

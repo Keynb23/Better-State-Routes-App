@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Menu, Home, Map, Briefcase, User, X } from 'lucide-react-native';
+import { Settings, Map, Home, Briefcase, Menu, User, X } from 'lucide-react-native';
+import { navStyles } from '../styles/AppStyles'; // Import styles
 
-const NavMenu = ({ onNavigate }) => {
+// NOTE: In a real Expo Router app, you'd use the Tab component for the BottomNav
+// and Link/useRouter for navigation, but we'll stick to your function-based approach for now.
+
+// --- 1. NavMenu (Dropdown) ---
+export const NavMenu = ({ onNavigate }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
-
   const handleNavigation = (route) => {
-    // onNavigate is assumed to be the function to handle route changes
     onNavigate(route);
     setIsOpen(false);
   };
@@ -21,38 +24,27 @@ const NavMenu = ({ onNavigate }) => {
   ];
 
   return (
-    // <View> replaces <div>
-    <View style={styles.container}>
-      {/* <TouchableOpacity> replaces the HTML <button> for pressability */}
-      <TouchableOpacity
-        onPress={toggleMenu}
-        style={styles.menuButton}
-        // Added accessibility props for better practice
-        accessible={true}
-        accessibilityLabel={isOpen ? "Close navigation menu" : "Open navigation menu"}
+    <View style={navStyles.menuContainer}>
+      <TouchableOpacity 
+        onPress={toggleMenu} 
+        style={navStyles.menuButton}
       >
-        {isOpen ? (
-          <X color="white" size={24} />
-        ) : (
-          <Menu color="white" size={24} />
-        )}
+        {isOpen ? <X color="white" size={24} /> : <Menu color="white" size={24} />}
       </TouchableOpacity>
 
       {isOpen && (
-        // Second <View> replaces the inner <div> for the dropdown
-        <View style={styles.dropdown}>
+        <View style={navStyles.dropdown}>
           {menuItems.map((item, index) => (
-            // <TouchableOpacity> replaces the HTML <button> for menu items
             <TouchableOpacity
               key={index}
-              style={[styles.menuItem, index < menuItems.length - 1 && styles.menuItemBorder]}
+              style={[
+                navStyles.menuItem, 
+                index < menuItems.length - 1 && navStyles.menuItemBorder
+              ]}
               onPress={() => handleNavigation(item.route)}
-              accessible={true}
-              accessibilityLabel={`Maps to ${item.name}`}
             >
-              <item.icon color="#3b82f6" size={20} style={styles.menuIcon} />
-              {/* <Text> replaces <span> */}
-              <Text style={styles.menuText}>{item.name}</Text>
+              <item.icon color="#3b82f6" size={20} style={navStyles.menuIcon} />
+              <Text style={navStyles.menuText}>{item.name}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -61,60 +53,53 @@ const NavMenu = ({ onNavigate }) => {
   );
 };
 
-// StyleSheet for styling (replaces Tailwind/className)
-const styles = StyleSheet.create({
-  container: {
-    // Note: The 'absolute' positioning here assumes a parent container that is either the entire screen or another positioned element.
-    position: 'absolute', 
-    top: 10,             
-    right: 10,            
-    zIndex: 50,
-  },
-  menuButton: {
-    padding: 8,
-    backgroundColor: '#2563eb', // blue-600 equivalent
-    borderRadius: 9999, // rounded-full equivalent
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5, // Android shadow
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 50, 
-    right: 0,
-    width: 192, 
-    backgroundColor: 'white',
-    borderRadius: 12, 
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 10, // Android shadow
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6', 
-  },
-  menuIcon: {
-    marginRight: 12, 
-  },
-  menuText: {
-    fontWeight: '500', 
-    color: '#4b5563', 
-  }
-});
+// --- 2. BottomNavigation ---
+export const BottomNavigation = ({ activePage, onNavigate }) => {
+    // We assume the page names match the routes in the `onNavigate` handler
+    const navItems = [
+        { name: 'Maps', icon: Map, route: 'Maps' },
+        { name: 'Home', icon: Home, route: 'Home', isHome: true },
+        { name: 'Jobs', icon: Briefcase, route: 'Jobs' },
+    ];
 
-// Fixes the Expo Router warning for missing default export
-export default NavMenu;
+    return (
+        <View style={navStyles.bottomNav}>
+            {navItems.map((item, index) => {
+                const isActive = activePage === item.route;
+                
+                // Determine base styles
+                let itemStyle = navStyles.navItem;
+                let textStyle = navStyles.navText;
+
+                // Apply special styles for the center Home button
+                if (item.isHome) {
+                    itemStyle = [itemStyle, navStyles.homeNavItem];
+                    textStyle = [textStyle, navStyles.homeNavText];
+                }
+
+                // Apply active styles
+                if (isActive) {
+                    textStyle = [textStyle, navStyles.activeNavText];
+                    if (item.isHome) {
+                        itemStyle = [itemStyle, navStyles.activeHomeNav]; // Placeholder for a unique active home style
+                        textStyle = [textStyle, navStyles.activeHomeNavText];
+                    }
+                }
+
+                return (
+                    <TouchableOpacity 
+                        key={index}
+                        onPress={() => onNavigate(item.route)} 
+                        style={itemStyle}
+                    >
+                        <item.icon 
+                            color={isActive ? '#2563eb' : '#9ca3af'} 
+                            size={24} 
+                        />
+                        <Text style={textStyle}>{item.name}</Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+};

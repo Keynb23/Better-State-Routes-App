@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000941778539",
+    "project_id": "better-state-llc",
+    "storage_bucket": "better-state-llc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000941778539:android:6a0ec1b4fb18ca6de0a32e",
+        "android_client_info": {
+          "package_name": "com.betterstatellc.routesapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJdZ2PFhNNIX-VPC2E5oNBD4eWmVsjc2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

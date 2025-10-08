@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Briefcase, ArrowLeft, List, Target } from 'lucide-react-native';
 import CustomerDetail from '../components/Customer';
 import JobEquipment from '../components/JobEquip';

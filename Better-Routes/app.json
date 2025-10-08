@@ -7,21 +7,23 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.betterstatellc.routesapp",
+      "config": {
+        "googleServicesFile": "./assets/GoogleService-Info.plist"
+      }
     },
     
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.betterstatellc.routesapp",
+      "edgeToEdgeEnabled": true,
+      "googleServicesFile": "./assets/google-services.json"
     },
-    
-    "web": {
-    },
-    
+    "web": {},
     "plugins": [
       "expo-router"
     ]
