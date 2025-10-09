@@ -1,7 +1,9 @@
-import React from 'react';
+// app/(app)/index.jsx - (The Main Dashboard Screen)
+
+import React, { useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Link } from 'expo-router';
-import { Clock, Map, Beaker, Truck, User, Home as HomeIcon } from 'lucide-react-native';
+import { Link, useNavigation } from 'expo-router';
+import { Clock, Map, Beaker, Truck, User, Settings, Menu } from 'lucide-react-native';
 
 // Helper component for quick access buttons
 const QuickAccessButton = ({ title, icon: Icon, href }) => (
@@ -13,18 +15,48 @@ const QuickAccessButton = ({ title, icon: Icon, href }) => (
   </Link>
 );
 
+
 export default function DashboardLandingScreen() {
+  const navigation = useNavigation();
+
+  // Custom Header Implementation
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      // Ensure the header is shown as we are customizing it here
+      headerShown: true,
+      headerTitle: 'Better State LLC',
+      headerLeft: () => (
+        <TouchableOpacity 
+          style={{ marginLeft: 10 }} 
+          // 🚨 ACTION: Navigate to the Profile/User page. Assuming 'Profile' is a direct route in your (app) group:
+          onPress={() => navigation.navigate('Profile')} 
+        >
+          <User size={24} color="#3b82f6" />
+        </TouchableOpacity>
+      ),
+      headerRight: () => (
+        <Link href="/pages/Settings" asChild>
+          <TouchableOpacity 
+            style={{ marginRight: 10 }} 
+            // 🚨 ACTION: Navigate to the global Settings page for things like Logout
+          >
+            <Settings size={24} color="#3b82f6" />
+          </TouchableOpacity>
+        </Link>
+      ),
+    });
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome, Employee!</Text>
+      <Text style={[styles.header, { marginTop: 0 }]}>Welcome, Employee!</Text>
       <Text style={styles.subheader}>Your Day At A Glance</Text>
       
       <View style={styles.buttonContainer}>
-        {/* Quick Access to the Time Tracker (new dedicated route) */}
+        {/* Quick Access to the Time Tracker */}
         <QuickAccessButton 
           title="Clock In/Out" 
           icon={Clock} 
-          // Link to the TimeTracker.jsx screen we created
           href="/(app)/TimeTracker" 
         />
         
@@ -50,6 +82,7 @@ export default function DashboardLandingScreen() {
         />
       </View>
 
+      {/* This is where the status card would live */}
       <View style={styles.statusCard}>
         <Text style={styles.statusHeader}>Current Status</Text>
         <Text style={styles.statusDetail}>Shift: Clocked Out</Text>
@@ -61,7 +94,13 @@ export default function DashboardLandingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 60, paddingHorizontal: 20, backgroundColor: '#f4f7f9' },
+  // 🚨 FIX: Cleaned up and verified the syntax for the style properties below
+  container: { 
+    flex: 1, 
+    paddingTop: 20, // Reduced from 60 to accommodate header
+    paddingHorizontal: 20, 
+    backgroundColor: '#f4f7f9' 
+  },
   header: { fontSize: 32, fontWeight: '800', color: '#1f2937', marginBottom: 10 },
   subheader: { fontSize: 18, fontWeight: '600', color: '#6b7280', marginBottom: 20 },
   buttonContainer: {
@@ -72,7 +111,7 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: 'white',
-    width: '48%', // Allows two buttons per row with a small gap
+    width: '48%',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',

@@ -1,137 +1,146 @@
-// /app/(app)/index.jsx (The new Dashboard Screen)
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Clock, CheckCircle } from 'lucide-react-native';
-// You might need to import your dashboard styles here, if they are separate.
+// app/index.jsx - (The Root Login Screen)
 
-export default function DashboardScreen() {
-  const [isClockedIn, setIsClockedIn] = useState(false);
-  const [clockInTime, setClockInTime] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0); // Time in seconds
-  
-  // Use a ref or state for the timer interval
-  useEffect(() => {
-    let interval = null;
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router'; // 🚨 Make sure useRouter is imported 🚨
+import { signInWithEmailAndPassword } from 'firebase/auth';
+// 🚨 Adjust path as needed 🚨
+import { auth } from './lib/firebaseConfig'; 
 
-    if (isClockedIn) {
-      // Start the timer
-      interval = setInterval(() => {
-        setElapsedTime(prevTime => prevTime + 1);
-      }, 1000);
-    } else if (!isClockedIn && elapsedTime !== 0) {
-      // Clear the timer when clocked out
-      clearInterval(interval);
+export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter(); // 🚨 Hook to manually navigate 🚨
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
     }
-    
-    // Cleanup function
-    return () => clearInterval(interval);
-  }, [isClockedIn]);
 
-  const handleClockToggle = () => {
-    if (isClockedIn) {
-      // CLOCK OUT LOGIC
-      const duration = formatTime(elapsedTime);
-      Alert.alert(
-        "Clock Out", 
-        `You worked for ${duration}. Time logged successfully.`,
-        [
-          { text: "OK", onPress: () => {
-            // FUTURE: Add logic here to save time to Firebase Firestore (Job Log)
-            setIsClockedIn(false);
-            setElapsedTime(0);
-          }}
-        ]
-      );
-    } else {
-      // CLOCK IN LOGIC
-      setClockInTime(new Date());
-      setElapsedTime(0); // Reset for the new session
-      setIsClockedIn(true);
-      Alert.alert("Clocked In!", `Started shift at ${new Date().toLocaleTimeString()}.`);
+    setLoading(true);
+    try {
+      // 1. Attempt to sign in with Firebase Authentication
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // 2. 🚨 CRITICAL FIX: Explicitly navigate to the dashboard group. 🚨
+      //    router.replace prevents the user from going back to the login screen.
+      router.replace('/(app)'); 
+      
+    } catch (error) {
+      console.error('Login Error:', error);
+      let errorMessage = 'Login failed. Please check your credentials.';
+      // Log the specific error code to your console for better debugging
+      console.error('Firebase Auth Code:', error.code); 
+      
+      // ... (rest of error handling)
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
+        errorMessage = 'Invalid email or password.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Check your connection.';
+      }
+      Alert.alert('Login Failed', errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatTime = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    
-    // Returns HH:MM:SS format
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
+  // ... (rest of the component)
+  // 🚨 Return the fully updated file with the file location commented at the top of the file in one line 🚨
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Daily Shift Tracker</Text>
-
-      {/* Clock Display */}
-      <View style={styles.timerCard}>
-        <Text style={styles.timerLabel}>Current Time Logged:</Text>
-        <Text style={styles.timerText}>
-          {formatTime(elapsedTime)}
-        </Text>
-        {isClockedIn && clockInTime && (
-          <Text style={styles.statusText}>
-            Shift started at: {clockInTime.toLocaleTimeString()}
-          </Text>
-        )}
-      </View>
-
-      {/* Clock Toggle Button */}
-      <TouchableOpacity
-        style={[styles.clockButton, isClockedIn ? styles.clockOut : styles.clockIn]}
-        onPress={handleClockToggle}
+      <Text style={styles.header}>Driver Login</Text>
+      <Text style={styles.subheader}>Better State LLC</Text>
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#9ca3af"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#9ca3af"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      
+      <TouchableOpacity 
+        style={styles.loginButton} 
+        onPress={handleLogin} 
+        disabled={loading}
       >
-        {isClockedIn 
-          ? <Clock size={24} color="white" style={{marginRight: 10}} />
-          : <CheckCircle size={24} color="white" style={{marginRight: 10}} />
-        }
-        <Text style={styles.buttonText}>
-          {isClockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
-        </Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Sign In</Text>
+        )}
       </TouchableOpacity>
 
-      {/* Placeholder for Current Job Status */}
-      <View style={styles.jobStatus}>
-        <Text style={styles.jobHeader}>Current Job Status</Text>
-        <Text style={styles.jobDetail}>No active job selected.</Text>
-        <Text style={styles.jobHint}>Go to 'Jobs' tab to start a route.</Text>
-      </View>
+      {/* Placeholder for other links like Forgot Password or Register */}
+      <TouchableOpacity style={styles.link}>
+        <Text style={styles.linkText}>Forgot Password?</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 60, paddingHorizontal: 20, backgroundColor: '#f4f7f9' },
-  header: { fontSize: 28, fontWeight: '700', color: '#1f2937', marginBottom: 30 },
-  timerCard: {
-    backgroundColor: 'white',
+  container: {
+    flex: 1,
+    justifyContent: 'center',
     padding: 30,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#f4f7f9',
   },
-  timerLabel: { fontSize: 16, color: '#6b7280', marginBottom: 5 },
-  timerText: { fontSize: 48, fontWeight: '800', color: '#10b981' },
-  statusText: { fontSize: 14, color: '#9ca3af', marginTop: 10 },
-  clockButton: {
-    flexDirection: 'row',
-    paddingVertical: 18,
-    borderRadius: 10,
+  header: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1f2937',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+  subheader: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#3b82f6',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 8,
+    fontSize: 16,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  loginButton: {
+    backgroundColor: '#3b82f6',
+    padding: 15,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
-  clockIn: { backgroundColor: '#10b981' }, // Green
-  clockOut: { backgroundColor: '#ef4444' }, // Red
-  buttonText: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-  jobStatus: { padding: 20, backgroundColor: '#e0f2f1', borderRadius: 8, borderWidth: 1, borderColor: '#a7f3d0' },
-  jobHeader: { fontSize: 20, fontWeight: '600', color: '#064e3b', marginBottom: 10 },
-  jobDetail: { fontSize: 16, color: '#065f46' },
-  jobHint: { fontSize: 14, color: '#6b7280', marginTop: 10, fontStyle: 'italic' },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  link: {
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#3b82f6',
+    fontSize: 14,
+  },
 });

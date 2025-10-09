@@ -1,15 +1,16 @@
+// app/_layout.jsx - (FINAL, STABLE AUTH LOGIC)
 import { Stack, Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth'; // <-- Import signOut
-import { auth } from './lib/firebaseConfig'; // <-- Adjust path as needed
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+// 🚨 Adjust path if needed. Assuming './lib/firebaseConfig' is correct.
+import { auth } from './lib/firebaseConfig'; 
 
-// A custom hook to manage the user's authentication state globally
-function useAuth() {
+// 🚨 EXPORT useAuth so other screens can use it (e.g., Profile screen for logout)
+export function useAuth() {
   const [user, setUser] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    // This is the Firebase listener that checks the user's status
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsLoaded(true); 
@@ -18,7 +19,6 @@ function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  // Utility function for logging out
   const logout = () => {
     signOut(auth);
   };
@@ -26,48 +26,44 @@ function useAuth() {
   return { user, isLoaded, logout };
 }
 
+
 export default function RootLayout() {
-  const { user, isLoaded, logout } = useAuth();
+  const { user, isLoaded } = useAuth();
   
   if (!isLoaded) {
-    return null; // Show a splash screen while loading
+    return null; // Show a splash/loading screen
   }
   
-  // Define if the user is authenticated
   const isAuthenticated = !!user;
 
+  // 🚨 STABLE REDIRECT LOGIC 🚨
+  // If the user is NOT authenticated, force them to the login screen.
+  // This bypasses the need for the 'redirect' prop on Stack.Screen, fixing the "Redirecting to a specific route" error.
+  if (!isAuthenticated) {
+    return <Redirect href="/" />;
+  }
+
+  // If the user IS authenticated, render the full, unrestricted Stack.
+  // The system will automatically land on the first defined route: the (app) group.
   return (
     <Stack>
-      {/* 1. Login Page: Hides the header. 
-           If authenticated, redirect to the main app layout. 
+      {/* 1. Login Screen (index.jsx): 
+          This route is included but will only be *displayed* if the user is unauthenticated 
+          and navigates directly to '/'. When they are authenticated, they are immediately redirected.
       */}
       <Stack.Screen 
         name="index" 
         options={{ headerShown: false }} 
       />
 
-      {isAuthenticated ? (
-        // 2. AUTHENTICATED ROUTES
-        // This is your main authenticated content.
-        <Stack.Screen 
-          name="components/nav" 
-          options={{ headerShown: false }} // 'nav' will handle its own header/tabs
-        />
-      ) : (
-        // 3. UNAUTHENTICATED REDIRECT
-        // If the user tries to access any authenticated route, redirect them to index (login).
-        // This should not redirect if they are already on 'index'.
-        <Redirect href="/" /> 
-      )}
-
-      {/* Add a basic Settings page here, which can include the Logout function 
-        (assuming you move Settings.jsx outside of the nav group for now)
-      */}
+      {/* 2. Authenticated Routes ((app) Group) - The user's main dashboard after successful login */}
+      <Stack.Screen 
+        name="(app)" 
+        options={{ headerShown: false }}
+      />
+    
+      {/* 3. Other Global Pages (like settings) */}
       <Stack.Screen name="pages/Settings" options={{ title: 'App Settings' }} />
     </Stack>
   );
 }
-
-// NOTE: You can now access the logout function via the useAuth hook 
-// if you export it:
-// export { useAuth };

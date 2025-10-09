@@ -1,4 +1,5 @@
-import React, { useState } from 'react'; // <-- Import useState
+// components/Auth/LoginCard.jsx
+import { useState } from 'react'; // <-- Import useState
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { LogIn } from 'lucide-react-native';
 import { loginStyles } from '../../styles/AppStyles'; 
